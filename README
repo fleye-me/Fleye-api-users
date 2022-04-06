@@ -1,0 +1,8 @@
+Acessando postgresql
+
+1. Mudar p usuario do database: sudo su - <usuario>
+	sudo su - admin
+	(senha padrão)
+
+2. Acessar database: psql <nome database>
+	psql apiusuarios
