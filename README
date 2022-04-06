@@ -6,3 +6,7 @@ Acessando postgresql
 
 2. Acessar database: psql <nome database>
 	psql apiusuarios
+	
+OBS.: ao acessar a base, se ficar
+	apiusuarios=# --> significa que está logado como superuser or root
+	apiusuarios=> --> no longer logged as superuser

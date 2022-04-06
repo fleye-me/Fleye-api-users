@@ -3,6 +3,8 @@
     Common variables: limit, page, sort, skip, filter
     How to access this variables from other files: common.<varible>
 */
+
+/*
 function initQuery(query, defaultValues) {
     let limit, page, sort, skip, filter;
 
@@ -65,3 +67,4 @@ function executeFilters(query, data) {
 }
 
 module.exports = { initQuery, organizeData, executeFilters }; //end of file, exports functions
+*/
