@@ -20,4 +20,6 @@ routes.put('/users/:id', db.updateUser);
 
 routes.delete('/users/:id', db.deleteUser);
 
+routes.patch('/users/:id', db.updateUserPartially);
+
 module.exports = routes;

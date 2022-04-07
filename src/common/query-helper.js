@@ -4,67 +4,102 @@
     How to access this variables from other files: common.<varible>
 */
 
-/*
-function initQuery(query, defaultValues) {
-    let limit, page, sort, skip, filter;
+function initQuery(
+  query,
+  defaultValues = {
+    limit: null,
+    page: null,
+    sort: null,
+    skip: null,
+    filter: null,
+  }
+) {
+  let limit, page, sort, skip, filter;
 
-    limit = parseInt(query['limit']);
-    if (Number.isNaN(limit)) limit = defaultValues.limit || 20; //either a default value for limit is informed (parameter) or it's 20
+  limit = parseInt(query['limit']);
+  if (Number.isNaN(limit)) limit = defaultValues.limit || 20; //either a default value for limit is informed (parameter) or it's 20
 
-    page = parseInt(query['page']);
-    if (Number.isNaN(page)) page = defaultValues.page || 0;
+  page = parseInt(query['page']);
+  if (Number.isNaN(page)) page = defaultValues.page || 0;
 
-    sort = query['sort'];
-    if (sort == null) sort = defaultValues.sort || 'DESC';
+  sort = query['sort'];
+  sort_accepted = ['ASC', 'DESC'];
+  if (sort == null || !sort_accepted.includes(sort))
+    sort = defaultValues.sort || 'DESC'; //check if it's eithe asc or desc
 
-    skip = parseInt(query['skip']);
-    if (Number.isNaN(skip)) skip = defaultValues.skip || 0;
+  skip = parseInt(query['skip']);
+  if (Number.isNaN(skip)) skip = defaultValues.skip || 0;
 
-    filter = query['filter'];
+  filter = query['filter'];
 
-    return {
-        limit,
-        page,
-        sort,
-        skip,
-        filter,
-    };
+  return {
+    limit,
+    page,
+    sort,
+    skip,
+    filter,
+  };
 }
 
 function organizeData(query, data) {
-    return query.sort === 'DESC' ? Array.from(data).reverse() : data; //if sort is descendent return reverse data
-    // Array.from(data) is necessary to create a copy of the object
-    // bc otherwise u are altering the original object, and it messes with next requests
+  return query.sort === 'DESC' ? Array.from(data).reverse() : data; //if sort is descendent return reverse data
+  // Array.from(data) is necessary to create a copy of the object
+  // bc otherwise u are altering the original object, and it messes with next requests
 }
 
 function executeFilters(query, data) {
-    const { skip, limit, page, filter } = query; //decompose query object, if the object doesn't have one of the variables ERROR
-    let output = data;
-    if (filter) {
-        output = [];
-        filterJson = JSON.parse(filter);
-        let filterValues = Object.entries(filterJson);
-        for (let item of data) {
-            let isItemOK = filterValues.reduce((approved, filterInstance) => {
-                //for each filter in list [key, value] of filter apply:
-                return (
-                    approved && item[filterInstance[0]] === filterInstance[1]
-                );
-            }, true); //initial value is true (bc logical operation is AND)
+  const { skip, limit, page, filter } = query; //decompose query object, if the object doesn't have one of the variables ERROR
+  let output = data;
+  if (filter) {
+    output = [];
+    filterJson = JSON.parse(filter);
+    let filterValues = Object.entries(filterJson);
+    for (let item of data) {
+      let isItemOK = filterValues.reduce((approved, filterInstance) => {
+        //for each filter in list [key, value] of filter apply:
+        return approved && item[filterInstance[0]] === filterInstance[1];
+      }, true); //initial value is true (bc logical operation is AND)
 
-            if (isItemOK) {
-                output.push(item);
-            }
-        }
+      if (isItemOK) {
+        output.push(item);
+      }
     }
+  }
 
-    if (skip) output = output.slice(skip);
+  if (skip) output = output.slice(skip);
 
-    let beginning = limit * page;
-    let end = limit * page + limit;
+  let beginning = limit * page;
+  let end = limit * page + limit;
 
-    return output.slice(beginning, end);
+  return output.slice(beginning, end);
 }
 
-module.exports = { initQuery, organizeData, executeFilters }; //end of file, exports functions
-*/
+function adjustQuery(query) {
+  const { skip, limit, page, filter, sort } = query; //decompose query object, if the object doesn't have one of the variables ERROR
+  let rawQuery = 'SELECT * FROM users';
+
+  if (filter != null) {
+    filterJson = JSON.parse(filter);
+    rawQuery += ' WHERE ';
+    filters = Object.entries(filterJson);
+    filters.forEach((element) => {
+      if (typeof element[1] === 'string')
+        rawQuery += element[0] + " = '" + element[1] + "'";
+      //when the column value is a strign needs ''
+      else rawQuery += element[0] + ' = ' + element[1];
+      if (filters.indexOf(element) < filters.length - 1) rawQuery += ' and ';
+    });
+  }
+  rawQuery += ' ORDER BY ' + 'id ' + sort; //more generic
+  rawQuery += ' LIMIT ' + limit;
+  //rawQuery += ' OFFSET ' + (page * limit + skip).toString(); // WHY? if u dont convert it adds a 0 at the end
+  rawQuery += ' OFFSET ' + (page * limit + skip);
+
+  console.log(page);
+  console.log(limit);
+
+  rawQuery += ';';
+  return rawQuery;
+}
+
+module.exports = { initQuery, organizeData, executeFilters, adjustQuery }; //end of file, exports functions

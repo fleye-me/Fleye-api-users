@@ -2,7 +2,9 @@
     Setting up configuration of PostgreSql connection
 */
 
+const { query } = require('express');
 const { response } = require('express');
+const { user, query_timeout } = require('pg/lib/defaults');
 
 const Pool = require('pg').Pool;
 const pool = new Pool({
@@ -13,12 +15,22 @@ const pool = new Pool({
   port: 5432,
 });
 
+const { initQuery, adjustQuery } = require('../common/query-helper');
+const User = require('../schemas/user.schema');
+
 // creating endpoints
 
 const getUsers = (req, res) => {
-  pool.query('SELECT * FROM users ORDER BY id ASC', (err, results) => {
+  queryy = req.query;
+
+  queryy = initQuery(queryy);
+  let rawQuery = adjustQuery(queryy);
+
+  console.log(rawQuery);
+
+  pool.query(rawQuery, (err, results) => {
     if (err) throw err;
-    res.status(200).json(results.rows); //200 means OK
+    res.status(200).json(results.rows);
   });
 };
 
@@ -60,6 +72,35 @@ const updateUser = (req, res) => {
       [name, age, id],
       (err, results) => {
         if (err) throw err;
+        res.status(200).send(`User modified with ID: ${id}`);
+      }
+    );
+  }
+  //returns error if the whole users isnt informed
+  res.status(400).send('Can not update user. Please inform: name, age').end();
+};
+
+const deleteUser = (req, res) => {
+  const id = parseInt(req.params.id);
+
+  pool.query('DELETE FROM users WHERE id = $1', [id], (err, results) => {
+    if (err) throw err;
+
+    res.status(200).send(`User deleted with ID: ${id}`);
+  });
+};
+
+const updateUserPartially = (req, res) => {
+  const id = parseInt(req.params.id);
+  const { name, age } = req.body; //future problem: age not int
+
+  if (name && age) {
+    //updating name and age
+    pool.query(
+      'UPDATE users SET name = $1, age = $2 WHERE id = $3',
+      [name, age, id],
+      (err, results) => {
+        if (err) throw err;
 
         res.status(200).send(`User modified with ID: ${id}`);
       }
@@ -89,20 +130,11 @@ const updateUser = (req, res) => {
   }
 };
 
-const deleteUser = (req, res) => {
-  const id = parseInt(req.params.id);
-
-  pool.query('DELETE FROM users WHERE id = $1', [id], (err, results) => {
-    if (err) throw err;
-
-    res.status(200).send(`User deleted with ID: ${id}`);
-  });
-};
-
 module.exports = {
   getUsers,
   getUserById,
   createUser,
   updateUser,
   deleteUser,
+  updateUserPartially,
 };
