@@ -1,0 +1,193 @@
+# this is an example of the Users API
+# as a demonstration of an API spec in YAML
+swagger: '2.0'
+info:
+  title: Users API
+  description: CRUD API for consulting data on users
+  version: "1.0.0"
+# the domain of the service
+host: http://localhost:3000/
+# array of all schemes that your API supports
+schemes:
+  - http
+# will be prefixed to all paths
+basePath: /v1
+produces:
+  - application/json
+paths:
+  /users:
+    get:
+      summary: User's data
+      description: |
+        The users endpoint returns information about the users. The response includes the display of name, age and id. It is possible to apply filters to this request.
+      parameters:
+        - in: query
+          name: limit
+          required: false
+          type: integer
+          description: Set a limit of instances that can be returned.
+        - name: page
+          in: query
+          description: Select the page of the result. A page has x amount of rows (x being the limit).
+          required: false
+          type: integer
+        - name: sort
+          in: query
+          description: Defines the order of the data. Can be either ASC or DESC, the latter being the default value. 
+          required: false
+          type: string
+        - name: skip
+          in: query
+          required: false
+          type: integer
+          description: Skips the first n results.
+        - name: filter
+          in: query
+          description: Filters the results.
+          required: false
+          type: json
+          format: id, name, age
+      tags:
+        - Users
+      responses:
+        200:
+          description: Array of users.
+          schema:
+            $ref: '#/definitions/User'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create user.
+      description: |
+        Create a user. Id is sequential and atributed by the banco de dados
+      parameters:
+        - name: name
+          in: body
+          description: User's name.
+          required: true
+          type: string
+        - name: age
+          in: body
+          description: User's age.
+          required: true
+          type: integer
+      tags:
+        - Users
+      responses:
+        201:
+          description: User created successfully.
+          schema:
+              $ref: '#/definitions/User'
+        default:
+          description: User not found.
+          schema:
+            $ref: '#/definitions/Error'
+    
+  /users/{id}:
+    get:
+      summary: Consult specific user.
+      description: |
+        The id of the user endpoint returns data of the specified user.
+      parameters:
+        - name: id
+          in: header
+          description: User unique identifier (id).
+          required: true
+          type: integer
+      tags:
+        - Users
+      responses:
+        200:
+          description: Json file of a single user's data.
+          schema:
+              $ref: '#/definitions/User'
+        default:
+          description: User not found.
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update user of the informed id.
+      description: |
+        The id of the user endpoint returns data of the specified user.
+      parameters:
+        - name: id
+          in: header
+          description: User unique identifier (id).
+          required: true
+          type: integer
+      tags:
+        - users
+      responses:
+        200:
+          description: User updated successfully.
+          schema:
+              $ref: '#/definitions/User'
+        default:
+          description: Cannot update user. Need more info?
+          schema:
+            $ref: '#/definitions/Error'
+    patch:
+      summary: Price Estimates
+      description: |
+        The id of the user endpoint returns data of the specified user.
+      parameters:
+        - name: id
+          in: params
+          description: User unique identifier (id).
+          required: true
+          type: integer
+      tags:
+        - Users
+      responses:
+        200:
+          description: User updated successfully.
+          schema:
+            $ref: '#/definitions/User'
+        default:
+          description: Error?
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Price Estimates
+      description: |
+        The id of the user endpoint returns data of the specified user.
+      parameters:
+        - name: id
+          in: params
+          description: User unique identifier (id).
+          required: true
+          type: integer
+      tags:
+        - Users
+      responses:
+        200:
+          description: User deleted successfully.
+        default:
+          description: User not found.
+          schema:
+            $ref: '#/definitions/Error'
+definitions:
+  User:
+    type: object
+    properties:
+      id:
+        type: number
+        description: Unique identifier representing a specific user.
+      name:
+        type: string
+        description: Name of the user.
+      age:
+        type: number
+        description: Age of the user.
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      fields:
+        type: string
