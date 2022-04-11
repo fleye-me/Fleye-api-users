@@ -102,4 +102,22 @@ function adjustQuery(query) {
   return rawQuery;
 }
 
-module.exports = { initQuery, organizeData, executeFilters, adjustQuery }; //end of file, exports functions
+function adjustError(err) {
+  //transforms it in a nice json object
+  err_obj = JSON.parse(
+    '{"code": "' +
+      err.code +
+      '", "message": "' +
+      err.message.replaceAll('"', "'") +
+      '"}'
+  );
+  return err_obj;
+}
+
+module.exports = {
+  initQuery,
+  organizeData,
+  executeFilters,
+  adjustQuery,
+  adjustError,
+}; //end of file, exports functions

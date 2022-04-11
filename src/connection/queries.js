@@ -15,7 +15,11 @@ const pool = new Pool({
   port: 5432,
 });
 
-const { initQuery, adjustQuery } = require('../common/query-helper');
+const {
+  initQuery,
+  adjustQuery,
+  adjustError,
+} = require('../common/query-helper');
 const User = require('../schemas/user.schema');
 
 // creating endpoints
@@ -29,8 +33,11 @@ const getUsers = (req, res) => {
   console.log(rawQuery);
 
   pool.query(rawQuery, (err, results) => {
-    if (err) throw err;
-    res.status(200).json(results.rows);
+    if (err) {
+      let error = adjustError(err);
+      return res.status(400).json(error);
+    }
+    return res.status(200).json(results.rows);
   });
 };
 
@@ -39,54 +46,67 @@ const getUserById = (req, res) => {
 
   pool.query('SELECT * FROM users WHERE id = $1', [id], (err, results) => {
     if (err) {
-      throw error;
+      let error = adjustError(err);
+      return res.status(400).json(error);
     }
     if (results.rows.length > 0) res.status(200).json(results.rows);
-    else res.status(400).send('User not found.'); // 400 means bad request
+    else res.status(404).send('User not found.'); // 400 means bad request
   });
 };
 
 const createUser = (req, res) => {
   const { name, age } = req.body;
 
+  if (!name || !age) {
+    return res.status(400).send('Obrigatory fields were null');
+  }
+
   pool.query(
     'INSERT INTO users (name, age) VALUES ($1, $2)',
     [name, age],
     (err, results) => {
-      if (err) throw err;
+      if (err) {
+        let error = adjustError(err);
+        return res.status(400).json(error);
+      }
 
-      res.status(201).send('User added.'); // 201 means created ok
+      return res.status(201).send('User added.'); // 201 means created ok
     }
   );
 };
 
-//allows to just update part of the user (thats supposed to be patch, not put)
 const updateUser = (req, res) => {
   const id = parseInt(req.params.id);
   const { name, age } = req.body; //future problem: age not int
 
-  if (name && age) {
-    //updating name and age
-    pool.query(
-      'UPDATE users SET name = $1, age = $2 WHERE id = $3',
-      [name, age, id],
-      (err, results) => {
-        if (err) throw err;
-        res.status(200).send(`User modified with ID: ${id}`);
+  //updating name and age
+  pool.query(
+    'UPDATE users SET name = $1, age = $2 WHERE id = $3',
+    [name, age, id],
+    (err, results) => {
+      if (err) {
+        let error = adjustError(err);
+        return res.status(400).json(error);
       }
-    );
-  }
-  //returns error if the whole users isnt informed
-  res.status(400).send('Can not update user. Please inform: name, age').end();
+      if (results.rowCount == 0) return res.status(404).send('User not found.');
+
+      return res.status(200).send(`User modified with ID: ${id}`);
+    }
+  );
 };
 
 const deleteUser = (req, res) => {
   const id = parseInt(req.params.id);
 
   pool.query('DELETE FROM users WHERE id = $1', [id], (err, results) => {
-    if (err) throw err;
+    if (err) {
+      let error = adjustError(err);
+      return res.status(400).json(error);
+    }
 
-    res.status(200).send(`User deleted with ID: ${id}`);
+    if (results.rowCount == 0) return res.status(404).send('User not found.');
+
+    return res.status(200).send(`User deleted with ID: ${id}`);
   });
 };
 
@@ -95,6 +115,7 @@ const updateUserPartially = (req, res) => {
   const { name, age } = req.body; //future problem: age not int
 
   if (name && age) {
+    //prob can  improve this
     //updating name and age
     pool.query(
       'UPDATE users SET name = $1, age = $2 WHERE id = $3',
@@ -116,7 +137,7 @@ const updateUserPartially = (req, res) => {
         res.status(200).send(`User modified with ID: ${id}`);
       }
     );
-  } else {
+  } else if (age) {
     //updating just age (name remains)
     pool.query(
       'UPDATE users SET age = $1 WHERE id = $2',
@@ -128,6 +149,7 @@ const updateUserPartially = (req, res) => {
       }
     );
   }
+  return res.status(400).send('Unable to update either name and age.');
 };
 
 module.exports = {

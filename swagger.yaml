@@ -1,47 +1,45 @@
 openapi: 3.0.1
 info:
   title: Users API
-  description: CRUD API for consulting data on users
+  description: CRUD API for consulting data on users.
   version: 1.0.0
 servers:
-- url: http://localhost:3000/
+  - url: http://localhost:3000/
 paths:
   /users:
     get:
       tags:
-      - Users
-      summary: User's data
+        - Users
+      summary: Obtain user's data
       description: |
-        The users endpoint returns information about the users. The response includes the display of name, age and id. It is possible to apply filters to this request.
+        Returns information about users: id, name and age. It is possible to apply filters to this request.
       parameters:
-      - name: limit
-        in: query
-        description: Set a limit of instances that can be returned.
-        schema:
-          type: integer
-      - name: page
-        in: query
-        description: Select the page of the result. A page has x amount of rows (x
-          being the limit).
-        schema:
-          type: integer
-      - name: sort
-        in: query
-        description: Defines the order of the data. Can be either ASC or DESC, the
-          latter being the default value.
-        schema:
-          type: string
-      - name: skip
-        in: query
-        description: Skips the first n results.
-        schema:
-          type: integer
-      - name: filter
-        in: query
-        description: Filters the results.
-        schema:
-          type: string
-          format: id, name, age
+        - name: limit
+          in: query
+          description: Limit of users dipsplayed on the page/returned.
+          schema:
+            type: integer
+        - name: page
+          in: query
+          description: Select the page of the result. Page is related to limit - a page has x amount of data instances, x being the limit.
+          schema:
+            type: integer
+        - name: sort
+          in: query
+          description: Defines the order of the data. Can be either ASC or DESC, the latter is the default value.
+          schema:
+            type: string
+        - name: skip
+          in: query
+          description: Skips the top x results.
+          schema:
+            type: integer
+        - name: filter
+          in: query
+          description: Filters the results. Filter is a string organized as a JSON object. It may include id, name and age values.
+          schema:
+            type: string
+            format: id, name, age
       responses:
         200:
           description: A JSON array of users.
@@ -53,30 +51,30 @@ paths:
                 id: 1
                 name: Ana
                 age: 90
-        default:
+        400:
           description: Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-              
+
     post:
       tags:
-      - Users
+        - Users
       summary: Create user.
       description: |
-        Create a user. Id is sequential and atributed by the banco de dados
+        Create a user. Id is sequential and automatically atributed.
       requestBody:
         required: true
         content:
-          application/json: 
+          application/json:
             schema:
-                $ref: '#/components/schemas/UserNoId'
+              $ref: '#/components/schemas/User-NameAge'
       responses:
         201:
           description: User created successfully.
-        default:
-          description: User not found.
+        400:
+          description: Error
           content:
             application/json:
               schema:
@@ -84,120 +82,128 @@ paths:
   /users/{id}:
     get:
       tags:
-      - Users
-      summary: Consult specific user.
+        - Users
+      summary: Consult user.
       description: |
-        The id of the user endpoint returns data of the specified user.
+        Obtaing information on a specific user by passing their id.
       parameters:
-      - name: id
-        in: path
-        description: User unique identifier (id).
-        required: true
-        schema:
-          type: integer
+        - name: id
+          in: path
+          description: User unique identifier.
+          required: true
+          schema:
+            type: integer
       responses:
         200:
-          description: Json file of a single user's data.
+          description: JSON object of a single user's data.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
-        default:
+        404:
           description: User not found.
+        400:
+          description: Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
     put:
       tags:
-      - users
-      summary: Update user of the informed id.
+        - Users
+      summary: Update user.
       description: |
-        The id of the user endpoint returns data of the specified user.
+        Updating a specified user. It is necessary to inform all fields of user object - name and age.
       parameters:
-      - name: id
-        in: path
-        description: User unique identifier (id).
+        - name: id
+          in: path
+          description: User unique identifier.
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: User updated information.
         required: true
-        schema:
-          type: integer
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User-NameAge'
       responses:
         200:
-          description: User updated successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        default:
-          description: Cannot update user. Need more info?
+          description: User modified successfully.
+        404:
+          description: User not found.
+        400:
+          description: Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
     delete:
       tags:
-      - Users
-      summary: Price Estimates
+        - Users
+      summary: Delete user.
       description: |
-        The id of the user endpoint returns data of the specified user.
+        Deleting a specific user.
       parameters:
-      - name: id
-        in: path
-        description: User unique identifier (id).
-        required: true
-        schema:
-          type: integer
+        - name: id
+          in: path
+          description: User unique identifier.
+          required: true
+          schema:
+            type: integer
       responses:
         200:
           description: User deleted successfully.
-          content: {}
-        default:
+        404:
           description: User not found.
+        400:
+          description: Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
     patch:
       tags:
-      - Users
-      summary: Price Estimates
+        - Users
+      summary: Update user.
       description: |
-        The id of the user endpoint returns data of the specified user.
+        Updating a specific user. It is necessary to inform only the fields that are altering.
       parameters:
-      - name: id
-        in: path
-        description: User unique identifier (id).
+        - name: id
+          in: path
+          description: User unique identifier.
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: User updated information. Only updated fields are necessary.
         required: true
-        schema:
-          type: integer
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User-NameAge'
+
       responses:
         200:
           description: User updated successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        default:
-          description: Error?
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+        400:
+          description: Error. Unable to update either name and age. //revisar
 components:
   schemas:
     User:
       type: object
       properties:
         id:
-          type: number
-          description: Unique identifier representing a specific user.
+          type: integer
+          description: Unique identifier of the user.
         name:
           type: string
           description: Name of the user.
         age:
-          type: number
+          type: integer
           description: Age of the user.
-    UserNoId:
+    User-NameAge:
       type: object
       properties:
         name:
@@ -210,9 +216,6 @@ components:
       type: object
       properties:
         code:
-          type: integer
-          format: int32
-        message:
           type: string
-        fields:
+        message:
           type: string
