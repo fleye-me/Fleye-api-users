@@ -55,10 +55,10 @@ const getUserById = (req, res) => {
 };
 
 const createUser = (req, res) => {
-  const { name, age } = req.body;
+  const { name, age } = req.body; //what if there is more stuff in the body -> no message, but just creates a user
 
   if (!name || !age) {
-    return res.status(400).send('Obrigatory fields were null');
+    return res.status(404).send('Obrigatory fields were null');
   }
 
   pool.query(
@@ -77,7 +77,9 @@ const createUser = (req, res) => {
 
 const updateUser = (req, res) => {
   const id = parseInt(req.params.id);
-  const { name, age } = req.body; //future problem: age not int
+  const { name, age } = req.body; //what if there is more stuff in the body -> no message, but just updates the selected fields
+
+  if (!name || !age) return res.status(404).send('Obrigatory fields were null');
 
   //updating name and age
   pool.query(
@@ -112,44 +114,25 @@ const deleteUser = (req, res) => {
 
 const updateUserPartially = (req, res) => {
   const id = parseInt(req.params.id);
-  const { name, age } = req.body; //future problem: age not int
+  const { name, age } = req.body; //in case a "new" fields is informed, no error message is presented
 
-  if (name && age) {
-    //prob can  improve this
-    //updating name and age
-    pool.query(
-      'UPDATE users SET name = $1, age = $2 WHERE id = $3',
-      [name, age, id],
-      (err, results) => {
-        if (err) throw err;
+  if (!name || !age) return res.status(404).send('Obrigatory fields were null');
 
-        res.status(200).send(`User modified with ID: ${id}`);
-      }
-    );
-  } else if (name) {
-    //updating just name (age remains the same)
-    pool.query(
-      'UPDATE users SET name = $1 WHERE id = $2',
-      [name, id],
-      (err, results) => {
-        if (err) throw err;
+  rawQuery = 'UPDATE users SET ';
+  if (name) rawQuery += "name = '" + name + "' ";
+  if (name && age) rawQuery += ', ';
+  if (age) rawQuery += 'age = ' + age;
+  rawQuery += ' WHERE id = ' + id + ';';
 
-        res.status(200).send(`User modified with ID: ${id}`);
-      }
-    );
-  } else if (age) {
-    //updating just age (name remains)
-    pool.query(
-      'UPDATE users SET age = $1 WHERE id = $2',
-      [age, id],
-      (err, results) => {
-        if (err) throw err;
+  console.log(rawQuery);
 
-        res.status(200).send(`User modified with ID: ${id}`);
-      }
-    );
-  }
-  return res.status(400).send('Unable to update either name and age.');
+  pool.query(rawQuery, (err, results) => {
+    if (err) {
+      let error = adjustError(err);
+      return res.status(400).json(error);
+    }
+    return res.status(200).send(`User modified with ID: ${id}`);
+  });
 };
 
 module.exports = {
