@@ -1,5 +1,16 @@
 module.exports = {
-    name: '',
-    id: '',
-    age: '',
-}
+  name: {
+    create: {
+      required: true,
+    },
+    update: {
+      required: false,
+    },
+  },
+  id: {
+    required: true,
+  },
+  age: {
+    required: false,
+  },
+};
