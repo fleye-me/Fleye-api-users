@@ -10,7 +10,7 @@ paths:
     get:
       tags:
         - Users
-      summary: Obtain user's data
+      summary: Consult user.
       description: |
         Returns information about users: id, name and age. It is possible to apply filters to this request.
       parameters:
@@ -57,7 +57,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
+              example:
+                code: '42703'
+                message: "column 'birthday' does not exist"
     post:
       tags:
         - Users
@@ -70,16 +72,58 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/User-NameAge'
+            example:
+              name: Maria
+              age: 8
       responses:
         201:
           description: User created successfully.
+        404:
+          description: Obrigatory fields were null.
         400:
           description: Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                code: '42703'
+                message: "column 'birthday' does not exist"
   /users/{id}:
+    patch:
+      tags:
+        - Users
+      summary: Update user.
+      description: |
+        Updating a specific user. It is only necessary to inform the fields that are altering.
+      parameters:
+        - name: id
+          in: path
+          description: User unique identifier.
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: User updated information. Only updated fields are necessary.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User-NameAge'
+            example:
+              age: 20
+      responses:
+        200:
+          description: User updated successfully.
+        400:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: '22P02'
+                message: "invalid input syntax for type smallint: 'new name'"
     get:
       tags:
         - Users
@@ -94,14 +138,18 @@ paths:
           schema:
             type: integer
       responses:
+        404:
+          description: User not found.
         200:
           description: JSON object of a single user's data.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
-        404:
-          description: User not found.
+              example:
+                id: 7
+                name: José
+                age: 20
         400:
           description: Error
           content:
@@ -128,6 +176,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/User-NameAge'
+            example:
+              name: Ana
+              age: 9
       responses:
         200:
           description: User modified successfully.
@@ -139,6 +190,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                code: '22P02'
+                message: "invalid input syntax for type smallint: 'I am 89 years old'"
     delete:
       tags:
         - Users
@@ -163,32 +217,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-    patch:
-      tags:
-        - Users
-      summary: Update user.
-      description: |
-        Updating a specific user. It is necessary to inform only the fields that are altering.
-      parameters:
-        - name: id
-          in: path
-          description: User unique identifier.
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        description: User updated information. Only updated fields are necessary.
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/User-NameAge'
 
-      responses:
-        200:
-          description: User updated successfully.
-        400:
-          description: Error. Unable to update either name and age. //revisar
 components:
   schemas:
     User:
@@ -199,23 +228,25 @@ components:
           description: Unique identifier of the user.
         name:
           type: string
-          description: Name of the user.
+          description: User's name.
         age:
           type: integer
-          description: Age of the user.
+          description: User's age.
     User-NameAge:
       type: object
       properties:
         name:
           type: string
-          description: Name of the user.
+          description: User's name.
         age:
           type: number
-          description: Age of the user.
+          description: User's age.
     Error:
       type: object
       properties:
         code:
           type: string
+          description: Error code
         message:
           type: string
+          description: Error message
