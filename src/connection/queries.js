@@ -56,51 +56,70 @@ const getUserById = (req, res) => {
 };
 
 const createUser = (req, res) => {
-  const { name, age } = req.body; //what if there is more stuff in the body -> no message, but just creates a user
+  const body = Object.entries(req.body);
+  let rawQuery = 'INSERT INTO users';
 
-  if (!name || !age) {
-    return res.status(404).send('Obrigatory fields were null');
+  //checks mandatory fields of User
+  for (let attribute of Object.entries(User)) {
+    if (attribute[1].required || attribute[1].create?.required)
+      if (!req.body[attribute[0]] && attribute[0] !== 'id')
+        //desconsiders id bc it is automatically generated
+        return res
+          .status(404)
+          .send(`Mandatory field (${attribute[0]}) was not informed.`);
   }
 
-  pool.query(
-    'INSERT INTO users (name, age) VALUES ($1, $2)',
-    [name, age],
-    (err, results) => {
-      if (err) {
-        let error = adjustError(err);
-        return res.status(400).json(error);
-      }
+  let fields = ' (';
+  rawQueryValues = ' (';
+  for (let attribute of body) {
+    //checks if request fields are valid
+    if (!User[attribute[0]])
+      return res.status(404).send(`Invalid field: ${attribute[0]}`);
 
-      return res.status(201).send('User added.'); // 201 means created ok
+    fields += attribute[0];
+
+    if (typeof attribute[1] === 'string')
+      rawQueryValues += "'" + attribute[1] + "'";
+    else rawQueryValues += attribute[1];
+
+    if (body.indexOf(attribute) < body.length - 1) {
+      rawQueryValues += ', ';
+      fields += ', ';
+    } else {
+      rawQueryValues += ') ';
+      fields += ') ';
     }
-  );
+  }
+
+  rawQuery += fields + 'values' + rawQueryValues + ';';
+  console.log(rawQuery);
+
+  pool.query(rawQuery, (err, results) => {
+    if (err) {
+      let error = adjustError(err);
+      return res.status(400).json(error);
+    }
+    return res.status(201).send('User created.'); // 201 means created ok
+  });
 };
 
-// put is mandatory to pass all user fields to update
+//PUT is a method of modifying resource where the client sends data that updates the entire resource
 const updateUser = (req, res) => {
   const id = parseInt(req.params.id);
   const body = Object.entries(req.body);
   let rawQuery = 'UPDATE users SET ';
 
   for (let attribute of Object.entries(User)) {
-    if (attribute[1].required || attribute[1].create?.required) {
-      //considers only the required attributes, in this casse is not usefull (needs all attributes)A
-      //keeping the code for future reference
-    }
-    console.log(attribute[0]);
-    console.log('>>', req.body[attribute[0]]);
-    if (!req.body[attribute[0]] && attribute[0] !== 'id') {
+    if (!req.body[attribute[0]] && attribute[0] !== 'id')
       //desconsiders id bc u get it from req.params
       return res
         .status(404)
         .send(`Mandatory field (${attribute[0]}) was not informed.`);
-    }
   }
   //validate: req.body has the required fields of User and *only* those
   for (let attribute of body) {
-    if (!User[attribute[0]]) {
+    if (!User[attribute[0]])
       return res.status(404).send(`Invalid field: ${attribute[0]}`);
-    }
 
     if (typeof attribute[1] === 'string')
       rawQuery += attribute[0] + " = '" + attribute[1] + "'";
@@ -135,6 +154,8 @@ const deleteUser = (req, res) => {
   });
 };
 
+//PATCH is a method of modifying resources where the client sends partial data that
+//is to be updated without modifying the entire data.
 const updateUserPartially = (req, res) => {
   const id = parseInt(req.params.id);
   const body = Object.entries(req.body);
@@ -144,10 +165,6 @@ const updateUserPartially = (req, res) => {
   for (let attribute of body) {
     if (!User[attribute[0]]) {
       return res.status(404).send(`Invalid field: ${attribute[0]}`);
-    }
-    //update has no required field so ok, its expected to not enter this if
-    if (User[attribute[0]].update?.required || User[attribute[0]].required) {
-      //doesnt make sense, u are getting the required ones that u already have on the req.body
     }
 
     if (typeof attribute[1] === 'string')
