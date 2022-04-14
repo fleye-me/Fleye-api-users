@@ -2,9 +2,9 @@
     Setting up configuration of PostgreSql connection
 */
 
-const { query } = require('express');
-const { response } = require('express');
-const { user, query_timeout } = require('pg/lib/defaults');
+//const { query } = require('express');
+//const { response } = require('express');
+//const { user, query_timeout } = require('pg/lib/defaults');
 const User = require('../schemas/user.schema');
 
 const Pool = require('pg').Pool;
@@ -16,12 +16,11 @@ const pool = new Pool({
   port: 5432,
 });
 
-const {
-  initQuery,
-  adjustQuery,
-  adjustError,
-} = require('../common/query-helper');
-const { attachment } = require('express/lib/response');
+const { initQuery, adjustError } = require('../common/query-helper');
+
+const { auxGet, auxCreateUser } = require('../common/data-helper');
+
+//const { attachment } = require('express/lib/response');
 
 // creating endpoints
 
@@ -29,7 +28,9 @@ const getUsers = (req, res) => {
   queryy = req.query;
 
   queryy = initQuery(queryy);
-  let rawQuery = adjustQuery(queryy);
+  let rawQuery = auxGet(queryy);
+
+  if (true) console.log('jnkm');
 
   console.log(rawQuery);
 
@@ -50,48 +51,36 @@ const getUserById = (req, res) => {
       let error = adjustError(err);
       return res.status(400).json(error);
     }
-    if (results.rows.length > 0) res.status(200).json(results.rows);
-    else res.status(404).send('User not found.'); // 400 means bad request
+    if (results.rows.length > 0) {
+      res.status(200).json(results.rows);
+    } else {
+      res.status(404).send('User not found.'); // 400 means bad request
+    }
   });
 };
 
 const createUser = (req, res) => {
   const body = Object.entries(req.body);
-  let rawQuery = 'INSERT INTO users';
 
   //checks mandatory fields of User
   for (let attribute of Object.entries(User)) {
-    if (attribute[1].required || attribute[1].create?.required)
-      if (!req.body[attribute[0]] && attribute[0] !== 'id')
+    if (attribute[1].required || attribute[1].create?.required) {
+      if (!req.body[attribute[0]] && attribute[0] !== 'id') {
         //desconsiders id bc it is automatically generated
         return res
           .status(404)
           .send(`Mandatory field (${attribute[0]}) was not informed.`);
+      }
+    }
   }
-
-  let fields = ' (';
-  rawQueryValues = ' (';
+  //checks if request fields are valid
   for (let attribute of body) {
-    //checks if request fields are valid
-    if (!User[attribute[0]])
+    if (!User[attribute[0]]) {
       return res.status(404).send(`Invalid field: ${attribute[0]}`);
-
-    fields += attribute[0];
-
-    if (typeof attribute[1] === 'string')
-      rawQueryValues += "'" + attribute[1] + "'";
-    else rawQueryValues += attribute[1];
-
-    if (body.indexOf(attribute) < body.length - 1) {
-      rawQueryValues += ', ';
-      fields += ', ';
-    } else {
-      rawQueryValues += ') ';
-      fields += ') ';
     }
   }
 
-  rawQuery += fields + 'values' + rawQueryValues + ';';
+  rawQuery = auxCreateUser(body);
   console.log(rawQuery);
 
   pool.query(rawQuery, (err, results) => {
@@ -107,24 +96,30 @@ const createUser = (req, res) => {
 const updateUser = (req, res) => {
   const id = parseInt(req.params.id);
   const body = Object.entries(req.body);
-  let rawQuery = 'UPDATE users SET ';
+  // let rawQuery = 'UPDATE users SET ';
 
   for (let attribute of Object.entries(User)) {
-    if (!req.body[attribute[0]] && attribute[0] !== 'id')
+    if (!req.body[attribute[0]] && attribute[0] !== 'id') {
       //desconsiders id bc u get it from req.params
       return res
         .status(404)
         .send(`Mandatory field (${attribute[0]}) was not informed.`);
+    }
   }
   //validate: req.body has the required fields of User and *only* those
   for (let attribute of body) {
-    if (!User[attribute[0]])
+    if (!User[attribute[0]]) {
       return res.status(404).send(`Invalid field: ${attribute[0]}`);
+    }
 
-    if (typeof attribute[1] === 'string')
-      rawQuery += attribute[0] + " = '" + attribute[1] + "'";
-    else rawQuery += attribute[0] + ' = ' + attribute[1];
-    if (body.indexOf(attribute) < body.length - 1) rawQuery += ', ';
+    // if (typeof attribute[1] === 'string'){
+    //   rawQuery += attribute[0] + " = '" + attribute[1] + "'";
+    // } else {
+    //   rawQuery += attribute[0] + ' = ' + attribute[1];
+    // }
+    // if (body.indexOf(attribute) < body.length - 1){
+    //   rawQuery += ', ';
+    // }
   }
 
   rawQuery += ' WHERE id = ' + id + ';';
@@ -148,8 +143,9 @@ const deleteUser = (req, res) => {
       return res.status(400).json(error);
     }
 
-    if (results.rowCount == 0) return res.status(404).send('User not found.');
-
+    if (results.rowCount == 0) {
+      return res.status(404).send('User not found.');
+    }
     return res.status(200).send(`User deleted with ID: ${id}`);
   });
 };
@@ -167,10 +163,14 @@ const updateUserPartially = (req, res) => {
       return res.status(404).send(`Invalid field: ${attribute[0]}`);
     }
 
-    if (typeof attribute[1] === 'string')
+    if (typeof attribute[1] === 'string') {
       rawQuery += attribute[0] + " = '" + attribute[1] + "'";
-    else rawQuery += attribute[0] + ' = ' + attribute[1];
-    if (body.indexOf(attribute) < body.length - 1) rawQuery += ', ';
+    } else {
+      rawQuery += attribute[0] + ' = ' + attribute[1];
+    }
+    if (body.indexOf(attribute) < body.length - 1) {
+      rawQuery += ', ';
+    }
   }
 
   rawQuery += ' WHERE id = ' + id + ';';
