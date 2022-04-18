@@ -2,9 +2,6 @@
     Setting up configuration of PostgreSql connection
 */
 
-//const { query } = require('express');
-//const { response } = require('express');
-//const { user, query_timeout } = require('pg/lib/defaults');
 const User = require('../schemas/user.schema');
 
 const Pool = require('pg').Pool;
@@ -24,8 +21,6 @@ const {
   auxUpdateUser,
 } = require('../common/data-helper');
 
-//const { attachment } = require('express/lib/response');
-
 // creating endpoints
 
 const getUsers = (req, res) => {
@@ -33,8 +28,6 @@ const getUsers = (req, res) => {
 
   queryy = initQuery(queryy);
   let rawQuery = auxGet(queryy);
-
-  if (true) console.log('jnkm');
 
   console.log(rawQuery);
 
@@ -100,7 +93,6 @@ const createUser = (req, res) => {
 const updateUser = (req, res) => {
   const id = parseInt(req.params.id);
   const body = Object.entries(req.body);
-  // let rawQuery = 'UPDATE users SET ';
 
   for (let [property, value] of Object.entries(User)) {
     if (!req.body[property] && property !== 'id') {
@@ -116,15 +108,6 @@ const updateUser = (req, res) => {
     if (!User[property]) {
       return res.status(404).send(`Invalid field: ${property}`);
     }
-
-    // if (typeof attribute[1] === 'string'){
-    //   rawQuery += attribute[0] + " = '" + attribute[1] + "'";
-    // } else {
-    //   rawQuery += attribute[0] + ' = ' + attribute[1];
-    // }
-    // if (body.indexOf(attribute) < body.length - 1){
-    //   rawQuery += ', ';
-    // }
   }
 
   // rawQuery += ' WHERE id = ' + id + ';';
@@ -161,26 +144,15 @@ const deleteUser = (req, res) => {
 const updateUserPartially = (req, res) => {
   const id = parseInt(req.params.id);
   const body = Object.entries(req.body);
-  let rawQuery = 'UPDATE users SET ';
 
   //validate: req.body has the required fields of User and *only* those
   for (let [property, value] of body) {
     if (!User[property]) {
       return res.status(404).send(`Invalid field: ${property}`);
     }
-
-    if (typeof value === 'string') {
-      rawQuery += property + " = '" + value + "'";
-    } else {
-      rawQuery += property + ' = ' + value;
-    }
-    if (body.indexOf([property, value]) < body.length - 1) {
-      // prone to error
-      rawQuery += ', ';
-    }
   }
 
-  rawQuery += ' WHERE id = ' + id + ';';
+  let rawQuery = auxUpdateUser(id, body);
   console.log(rawQuery);
 
   pool.query(rawQuery, (err, results) => {
