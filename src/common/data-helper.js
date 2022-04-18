@@ -29,43 +29,47 @@ function auxGet(query) {
 
 function auxCreateUser(body) {
   let rawQuery = 'INSERT INTO users';
-  let fields = ' (';
-  let rawQueryValues = ' (';
+  let fields = [];
 
-  for (let attribute of body) {
-    fields += attribute[0];
+  let values = [];
+  for (let [property, value] of body) {
+    fields.push(property);
 
-    if (typeof attribute[1] === 'string') {
-      rawQueryValues += "'" + attribute[1] + "'";
+    if (typeof value === 'string') {
+      values.push(`'${value}'`);
+      // rawQueryValues += "'" + value + "'";
     } else {
-      rawQueryValues += attribute[1];
+      values.push(value);
+      // rawQueryValues += value;
     }
 
-    if (body.indexOf(attribute) < body.length - 1) {
-      rawQueryValues += ', ';
-      fields += ', ';
-    } else {
-      rawQueryValues += ') ';
-      fields += ') ';
-    }
+    // if (body.indexOf([property, value]) < body.length - 1) {
+    //   rawQueryValues += ', ';
+    //   fields += ', ';
+    // } else {
+    //   rawQueryValues += ') ';
+    //   fields += ') ';
+    // }
   }
-  rawQuery += fields + 'values' + rawQueryValues + ';';
+
+  rawQuery += ` (${fields.join(', ')}) values (${values.join(', ')});`;
+  // rawQuery += fields + 'values' + rawQueryValues + ';';
   return rawQuery;
 }
 
-function auxUpdateUser() {
+function auxUpdateUser(id, body) {
   let rawQuery = 'UPDATE users SET ';
-
-  for (let attribute of body) {
-    if (typeof attribute[1] === 'string') {
-      rawQuery += attribute[0] + " = '" + attribute[1] + "'";
+  let values = [];
+  for (let [property, value] of body) {
+    if (typeof value === 'string') {
+      values.push(`${property}  = '${value}'`);
     } else {
-      rawQuery += attribute[0] + ' = ' + attribute[1];
-    }
-    if (body.indexOf(attribute) < body.length - 1) {
-      rawQuery += ', ';
+      values.push(`${property}  =  ${value}`);
     }
   }
+
+  rawQuery += `${values.join(', ')} WHERE id = ${id};`;
+  return rawQuery;
 }
 
-module.exports = { auxGet, auxCreateUser };
+module.exports = { auxGet, auxCreateUser, auxUpdateUser };

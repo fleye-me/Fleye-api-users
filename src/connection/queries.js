@@ -18,7 +18,11 @@ const pool = new Pool({
 
 const { initQuery, adjustError } = require('../common/query-helper');
 
-const { auxGet, auxCreateUser } = require('../common/data-helper');
+const {
+  auxGet,
+  auxCreateUser,
+  auxUpdateUser,
+} = require('../common/data-helper');
 
 //const { attachment } = require('express/lib/response');
 
@@ -63,20 +67,20 @@ const createUser = (req, res) => {
   const body = Object.entries(req.body);
 
   //checks mandatory fields of User
-  for (let attribute of Object.entries(User)) {
-    if (attribute[1].required || attribute[1].create?.required) {
-      if (!req.body[attribute[0]] && attribute[0] !== 'id') {
+  for (let [property, value] of Object.entries(User)) {
+    if (value.required || value.create?.required) {
+      if (!req.body[property] && property !== 'id') {
         //desconsiders id bc it is automatically generated
         return res
           .status(404)
-          .send(`Mandatory field (${attribute[0]}) was not informed.`);
+          .send(`Mandatory field (${property}) was not informed.`);
       }
     }
   }
   //checks if request fields are valid
-  for (let attribute of body) {
-    if (!User[attribute[0]]) {
-      return res.status(404).send(`Invalid field: ${attribute[0]}`);
+  for (let [property, value] of body) {
+    if (!User[property]) {
+      return res.status(404).send(`Invalid field: ${property}`);
     }
   }
 
@@ -98,18 +102,19 @@ const updateUser = (req, res) => {
   const body = Object.entries(req.body);
   // let rawQuery = 'UPDATE users SET ';
 
-  for (let attribute of Object.entries(User)) {
-    if (!req.body[attribute[0]] && attribute[0] !== 'id') {
+  for (let [property, value] of Object.entries(User)) {
+    if (!req.body[property] && property !== 'id') {
+      //NEW ALTERATIONS: for (const [key, value] of Object.entries(object)) {
       //desconsiders id bc u get it from req.params
       return res
         .status(404)
-        .send(`Mandatory field (${attribute[0]}) was not informed.`);
+        .send(`Mandatory field (${property}) was not informed.`);
     }
   }
   //validate: req.body has the required fields of User and *only* those
-  for (let attribute of body) {
-    if (!User[attribute[0]]) {
-      return res.status(404).send(`Invalid field: ${attribute[0]}`);
+  for (let [property, value] of body) {
+    if (!User[property]) {
+      return res.status(404).send(`Invalid field: ${property}`);
     }
 
     // if (typeof attribute[1] === 'string'){
@@ -122,7 +127,8 @@ const updateUser = (req, res) => {
     // }
   }
 
-  rawQuery += ' WHERE id = ' + id + ';';
+  // rawQuery += ' WHERE id = ' + id + ';';
+  let rawQuery = auxUpdateUser(id, body);
   console.log(rawQuery);
 
   pool.query(rawQuery, (err, results) => {
@@ -158,17 +164,18 @@ const updateUserPartially = (req, res) => {
   let rawQuery = 'UPDATE users SET ';
 
   //validate: req.body has the required fields of User and *only* those
-  for (let attribute of body) {
-    if (!User[attribute[0]]) {
-      return res.status(404).send(`Invalid field: ${attribute[0]}`);
+  for (let [property, value] of body) {
+    if (!User[property]) {
+      return res.status(404).send(`Invalid field: ${property}`);
     }
 
-    if (typeof attribute[1] === 'string') {
-      rawQuery += attribute[0] + " = '" + attribute[1] + "'";
+    if (typeof value === 'string') {
+      rawQuery += property + " = '" + value + "'";
     } else {
-      rawQuery += attribute[0] + ' = ' + attribute[1];
+      rawQuery += property + ' = ' + value;
     }
-    if (body.indexOf(attribute) < body.length - 1) {
+    if (body.indexOf([property, value]) < body.length - 1) {
+      // prone to error
       rawQuery += ', ';
     }
   }
