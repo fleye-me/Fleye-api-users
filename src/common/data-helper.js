@@ -1,3 +1,15 @@
+const { query } = require('express');
+const { adjustError } = require('./query-helper');
+
+const Pool = require('pg').Pool;
+const pool = new Pool({
+  user: 'admin',
+  host: 'localhost',
+  database: 'apiusuarios',
+  password: 'admin',
+  port: 5432,
+});
+
 // auxiliary functions - SQL commands
 function auxGet(query) {
   const { skip, limit, page, filter, sort } = query; //decompose query object, if the object doesn't have one of the variables ERROR
@@ -21,7 +33,7 @@ function auxGet(query) {
   }
   rawQuery += ` ORDER BY id ${sort}`;
   rawQuery += ` LIMIT ${limit}`;
-  rawQuery += ` OFFSET ${(page * limit + skip)}`;
+  rawQuery += ` OFFSET ${page * limit + skip}`;
 
   rawQuery += ';';
   return rawQuery;
@@ -61,4 +73,37 @@ function auxUpdateUser(id, body) {
   return rawQuery;
 }
 
-module.exports = { auxGet, auxCreateUser, auxUpdateUser };
+async function isEmailUnique(email) {
+  let rawQuery = `SELECT * FROM users WHERE email = '${email}'`;
+  const prom = await new Promise((resolve, reject) => {
+    pool.query(rawQuery, (err, results) => {
+      if (err) {
+        let error = adjustError(err);
+        reject(error);
+      }
+      resolve(results.rows.length === 0);
+    });
+  });
+}
+
+async function countUsers(teste) {
+  let rawQuery = 'SELECT count(*) FROM users;';
+  const prom = new Promise((resolve, reject) => {
+    try {
+      pool.query(rawQuery, (err, results) => {
+        resolve(results.rows[0]['count']);
+      });
+    } catch (e) {
+      reject(e);
+    }
+  });
+  return prom;
+}
+
+module.exports = {
+  auxGet,
+  auxCreateUser,
+  auxUpdateUser,
+  isEmailUnique,
+  countUsers,
+};

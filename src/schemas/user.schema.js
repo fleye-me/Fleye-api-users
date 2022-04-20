@@ -13,4 +13,7 @@ module.exports = {
   age: {
     required: false,
   },
+  email: {
+    required: true,
+  },
 };

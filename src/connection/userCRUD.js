@@ -19,6 +19,8 @@ const {
   auxGet,
   auxCreateUser,
   auxUpdateUser,
+  isEmailUnique,
+  countUsers,
 } = require('../common/data-helper');
 
 // creating endpoints
@@ -56,7 +58,7 @@ const getUserById = (req, res) => {
   });
 };
 
-const createUser = (req, res) => {
+const createUser = async (req, res) => {
   const body = Object.entries(req.body);
 
   //checks mandatory fields of User
@@ -76,6 +78,16 @@ const createUser = (req, res) => {
       return res.status(404).send(`Invalid field: ${property}`);
     }
   }
+  console.log('--', req.body.email);
+
+  //check is email is unique
+  const isUniqueEmail = await isEmailUnique(req.body.email);
+  console.log('isUnique email from queries ' + isUniqueEmail);
+  if (isUniqueEmail === false) {
+    return res
+      .status(404)
+      .send(`Invalid data. Email (${req.body.email}) is not unique`);
+  }
 
   rawQuery = auxCreateUser(body);
   console.log(rawQuery);
@@ -87,6 +99,7 @@ const createUser = (req, res) => {
     }
     return res.status(201).send('User created.'); // 201 means created ok
   });
+  //if there is annother return here -> problem!!
 };
 
 //PUT is a method of modifying resource where the client sends data that updates the entire resource
@@ -110,7 +123,6 @@ const updateUser = (req, res) => {
     }
   }
 
-  // rawQuery += ' WHERE id = ' + id + ';';
   let rawQuery = auxUpdateUser(id, body);
   console.log(rawQuery);
 
@@ -160,8 +172,18 @@ const updateUserPartially = (req, res) => {
       let error = adjustError(err);
       return res.status(400).json(error);
     }
+    console.log('resuls from updateUserPartially: ', results);
     return res.status(200).send(`User modified with ID: ${id}`);
   });
+};
+
+const countAllUsers = async (req, res) => {
+  try {
+    const count = await countUsers();
+    return res.status(200).send(`Total = ${count}`);
+  } catch (e) {
+    return res.status(400).json(e);
+  }
 };
 
 module.exports = {
@@ -171,4 +193,5 @@ module.exports = {
   updateUser,
   deleteUser,
   updateUserPartially,
+  countAllUsers,
 };
