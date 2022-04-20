@@ -21,6 +21,7 @@ const {
   auxUpdateUser,
   isEmailUnique,
   countUsers,
+  validateUser,
 } = require('../common/data-helper');
 
 // creating endpoints
@@ -42,19 +43,19 @@ const getUsers = (req, res) => {
   });
 };
 
-const getUserById = (req, res) => {
+const getUserById = async (req, res) => {
   const id = parseInt(req.params.id);
+
+  if (!(await validateUser(id))) {
+    return res.status(404).send('User not found.');
+  }
 
   pool.query('SELECT * FROM users WHERE id = $1', [id], (err, results) => {
     if (err) {
       let error = adjustError(err);
       return res.status(400).json(error);
     }
-    if (results.rows.length > 0) {
-      res.status(200).json(results.rows);
-    } else {
-      res.status(404).send('User not found.'); // 400 means bad request
-    }
+    return res.status(200).json(results.rows);
   });
 };
 
@@ -78,11 +79,9 @@ const createUser = async (req, res) => {
       return res.status(404).send(`Invalid field: ${property}`);
     }
   }
-  console.log('--', req.body.email);
 
   //check is email is unique
   const isUniqueEmail = await isEmailUnique(req.body.email);
-  console.log('isUnique email from queries ' + isUniqueEmail);
   if (isUniqueEmail === false) {
     return res
       .status(404)
@@ -103,9 +102,13 @@ const createUser = async (req, res) => {
 };
 
 //PUT is a method of modifying resource where the client sends data that updates the entire resource
-const updateUser = (req, res) => {
+const updateUser = async (req, res) => {
   const id = parseInt(req.params.id);
   const body = Object.entries(req.body);
+
+  if (!(await validateUser(id))) {
+    return res.status(404).send('User not found.');
+  }
 
   for (let [property, value] of Object.entries(User)) {
     if (!req.body[property] && property !== 'id') {
@@ -135,17 +138,17 @@ const updateUser = (req, res) => {
   });
 };
 
-const deleteUser = (req, res) => {
+const deleteUser = async (req, res) => {
   const id = parseInt(req.params.id);
+
+  if (!(await validateUser(id))) {
+    return res.status(404).send('User not found.');
+  }
 
   pool.query('DELETE FROM users WHERE id = $1', [id], (err, results) => {
     if (err) {
       let error = adjustError(err);
       return res.status(400).json(error);
-    }
-
-    if (results.rowCount == 0) {
-      return res.status(404).send('User not found.');
     }
     return res.status(200).send(`User deleted with ID: ${id}`);
   });
@@ -153,10 +156,13 @@ const deleteUser = (req, res) => {
 
 //PATCH is a method of modifying resources where the client sends partial data that
 //is to be updated without modifying the entire data.
-const updateUserPartially = (req, res) => {
+const updateUserPartially = async (req, res) => {
   const id = parseInt(req.params.id);
   const body = Object.entries(req.body);
 
+  if (!(await validateUser(id))) {
+    return res.status(404).send('User not found.');
+  }
   //validate: req.body has the required fields of User and *only* those
   for (let [property, value] of body) {
     if (!User[property]) {
@@ -172,7 +178,6 @@ const updateUserPartially = (req, res) => {
       let error = adjustError(err);
       return res.status(400).json(error);
     }
-    console.log('resuls from updateUserPartially: ', results);
     return res.status(200).send(`User modified with ID: ${id}`);
   });
 };

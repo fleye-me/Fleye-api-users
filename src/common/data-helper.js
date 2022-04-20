@@ -100,10 +100,25 @@ async function countUsers(teste) {
   return prom;
 }
 
+//returns a promise with a boolena value on resolve: true for valid user, false otherwhise
+async function validateUser(id) {
+  let rawQuery = `SELECT * FROM users WHERE id = ${id};`;
+  const prom = await new Promise((resolve, reject) => {
+    pool.query(rawQuery, (err, results) => {
+      if (err) {
+        let error = adjustError(err);
+        reject(error);
+      }
+      resolve(results.rowCount === 1);
+    });
+  });
+}
+
 module.exports = {
   auxGet,
   auxCreateUser,
   auxUpdateUser,
   isEmailUnique,
   countUsers,
+  validateUser,
 };
