@@ -21,6 +21,7 @@ const {
   auxUpdateUser,
   isUnique,
   countUsers,
+  validateUser,
 } = require('../common/data-helper');
 const createApplication = require('express/lib/express');
 
@@ -43,19 +44,19 @@ const getUsers = (req, res) => {
   });
 };
 
-const getUserById = (req, res) => {
+const getUserById = async (req, res) => {
   const id = parseInt(req.params.id);
+
+  if (!(await validateUser(id))) {
+    return res.status(404).send('User not found.');
+  }
 
   pool.query('SELECT * FROM users WHERE id = $1', [id], (err, results) => {
     if (err) {
       let error = adjustError(err);
       return res.status(400).json(error);
     }
-    if (results.rows.length > 0) {
-      res.status(200).json(results.rows);
-    } else {
-      res.status(404).send('User not found.'); // 400 means bad request
-    }
+    return res.status(200).json(results.rows);
   });
 };
 
@@ -122,6 +123,10 @@ const updateUser = async (req, res) => {
   const id = parseInt(req.params.id);
   const body = Object.entries(req.body);
 
+  if (!(await validateUser(id))) {
+    return res.status(404).send('User not found.');
+  }
+
   //verify: mandatory fields
   for (let [property, value] of Object.entries(User)) {
     if (!req.body[property] && property !== 'id') {
@@ -174,17 +179,17 @@ const updateUser = async (req, res) => {
   });
 };
 
-const deleteUser = (req, res) => {
+const deleteUser = async (req, res) => {
   const id = parseInt(req.params.id);
+
+  if (!(await validateUser(id))) {
+    return res.status(404).send('User not found.');
+  }
 
   pool.query('DELETE FROM users WHERE id = $1', [id], (err, results) => {
     if (err) {
       let error = adjustError(err);
       return res.status(400).json(error);
-    }
-
-    if (results.rowCount == 0) {
-      return res.status(404).send('User not found.');
     }
     return res.status(200).send(`User deleted with ID: ${id}`);
   });
@@ -196,6 +201,9 @@ const updateUserPartially = async (req, res) => {
   const id = parseInt(req.params.id);
   const body = Object.entries(req.body);
 
+  if (!(await validateUser(id))) {
+    return res.status(404).send('User not found.');
+  }
   //validate: req.body has the required fields of User and *only* those
   let invalidFields = [];
   for (let [property, value] of body) {
@@ -235,7 +243,6 @@ const updateUserPartially = async (req, res) => {
       let error = adjustError(err);
       return res.status(400).json(error);
     }
-    console.log('resuls from updateUserPartially: ', results);
     return res.status(200).send(`User modified with ID: ${id}`);
   });
 };
