@@ -47,8 +47,13 @@ const getUsers = (req, res) => {
 const getUserById = async (req, res) => {
   const id = parseInt(req.params.id);
 
-  if (!(await validateUser(id))) {
-    return res.status(404).send('User not found.');
+  //validate: user existis
+  try {
+    if (!(await validateUser(id))) {
+      return res.status(404).send('User not found.');
+    }
+  } catch (e) {
+    return res.status(400).json(e);
   }
 
   pool.query('SELECT * FROM users WHERE id = $1', [id], (err, results) => {
@@ -123,8 +128,13 @@ const updateUser = async (req, res) => {
   const id = parseInt(req.params.id);
   const body = Object.entries(req.body);
 
-  if (!(await validateUser(id))) {
-    return res.status(404).send('User not found.');
+  //validate: user existis
+  try {
+    if (!(await validateUser(id))) {
+      return res.status(404).send('User not found.');
+    }
+  } catch (e) {
+    return res.status(400).json(e);
   }
 
   //verify: mandatory fields
@@ -182,8 +192,13 @@ const updateUser = async (req, res) => {
 const deleteUser = async (req, res) => {
   const id = parseInt(req.params.id);
 
-  if (!(await validateUser(id))) {
-    return res.status(404).send('User not found.');
+  //validate: user existis
+  try {
+    if (!(await validateUser(id))) {
+      return res.status(404).send('User not found.');
+    }
+  } catch (e) {
+    return res.status(400).json(e);
   }
 
   pool.query('DELETE FROM users WHERE id = $1', [id], (err, results) => {
@@ -201,9 +216,15 @@ const updateUserPartially = async (req, res) => {
   const id = parseInt(req.params.id);
   const body = Object.entries(req.body);
 
-  if (!(await validateUser(id))) {
-    return res.status(404).send('User not found.');
+  //validate: user existis
+  try {
+    if (!(await validateUser(id))) {
+      return res.status(404).send('User not found.');
+    }
+  } catch (e) {
+    return res.status(400).json(e);
   }
+
   //validate: req.body has the required fields of User and *only* those
   let invalidFields = [];
   for (let [property, value] of body) {

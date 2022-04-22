@@ -121,6 +121,7 @@ async function validateUser(id) {
       resolve(results.rowCount === 1);
     });
   });
+  return prom;
 }
 
 module.exports = {
