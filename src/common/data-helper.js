@@ -73,8 +73,15 @@ function auxUpdateUser(id, body) {
   return rawQuery;
 }
 
-async function isEmailUnique(email) {
-  let rawQuery = `SELECT * FROM users WHERE email = '${email}'`;
+async function isUnique(propertyName, value) {
+  let rawQuery;
+  if (typeof value === 'string') {
+    //assumes that the value informed is in the correct type
+    rawQuery = `SELECT * FROM users WHERE ${propertyName} = '${value}';`;
+  } else {
+    rawQuery = `SELECT * FROM users WHERE ${propertyName} = ${value};`;
+  }
+  console.log('raw query from isUnique: ', rawQuery);
   const prom = await new Promise((resolve, reject) => {
     pool.query(rawQuery, (err, results) => {
       if (err) {
@@ -84,6 +91,8 @@ async function isEmailUnique(email) {
       resolve(results.rows.length === 0);
     });
   });
+  console.log(prom);
+  return prom;
 }
 
 async function countUsers(teste) {
@@ -104,6 +113,6 @@ module.exports = {
   auxGet,
   auxCreateUser,
   auxUpdateUser,
-  isEmailUnique,
   countUsers,
+  isUnique,
 };

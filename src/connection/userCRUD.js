@@ -19,9 +19,10 @@ const {
   auxGet,
   auxCreateUser,
   auxUpdateUser,
-  isEmailUnique,
+  isUnique,
   countUsers,
 } = require('../common/data-helper');
+const createApplication = require('express/lib/express');
 
 // creating endpoints
 
@@ -73,20 +74,34 @@ const createUser = async (req, res) => {
     }
   }
   //checks if request fields are valid
+  let invalidFields = [];
   for (let [property, value] of body) {
     if (!User[property]) {
-      return res.status(404).send(`Invalid field: ${property}`);
+      invalidFields.push(property);
     }
   }
-  console.log('--', req.body.email);
+  if (invalidFields.length > 0) {
+    return res.status(404).send(`Invalid field: ${invalidFields}`);
+  }
 
-  //check is email is unique
-  const isUniqueEmail = await isEmailUnique(req.body.email);
-  console.log('isUnique email from queries ' + isUniqueEmail);
-  if (isUniqueEmail === false) {
+  //validate: field that marked as unique is unique
+  let notUniqueFields = [];
+  for (let [property, value] of body) {
+    if (User[property].unique) {
+      try {
+        let isUniques = await isUnique(property, value);
+        if (!isUniques) {
+          notUniqueFields.push(property);
+        }
+      } catch (e) {
+        return res.status(400).json(e);
+      }
+    }
+  }
+  if (notUniqueFields.length > 0) {
     return res
-      .status(404)
-      .send(`Invalid data. Email (${req.body.email}) is not unique`);
+      .status(400)
+      .send(`Invalid data. Fields: ${notUniqueFields} are not unique.`);
   }
 
   rawQuery = auxCreateUser(body);
@@ -103,13 +118,13 @@ const createUser = async (req, res) => {
 };
 
 //PUT is a method of modifying resource where the client sends data that updates the entire resource
-const updateUser = (req, res) => {
+const updateUser = async (req, res) => {
   const id = parseInt(req.params.id);
   const body = Object.entries(req.body);
 
+  //verify: mandatory fields
   for (let [property, value] of Object.entries(User)) {
     if (!req.body[property] && property !== 'id') {
-      //NEW ALTERATIONS: for (const [key, value] of Object.entries(object)) {
       //desconsiders id bc u get it from req.params
       return res
         .status(404)
@@ -117,10 +132,34 @@ const updateUser = (req, res) => {
     }
   }
   //validate: req.body has the required fields of User and *only* those
+  let invalidFields = [];
   for (let [property, value] of body) {
     if (!User[property]) {
-      return res.status(404).send(`Invalid field: ${property}`);
+      invalidFields.push(property);
     }
+  }
+  if (invalidFields.length > 0) {
+    return res.status(404).send(`Invalid field: ${invalidFields}`);
+  }
+
+  //validate: field that marked as unique is unique
+  let notUniqueFields = [];
+  for (let [property, value] of body) {
+    if (User[property].unique) {
+      try {
+        let isUniques = await isUnique(property, value);
+        if (!isUniques) {
+          notUniqueFields.push(property);
+        }
+      } catch (e) {
+        return res.status(400).json(e);
+      }
+    }
+  }
+  if (notUniqueFields.length > 0) {
+    return res
+      .status(400)
+      .send(`Invalid data. Fields: ${notUniqueFields} are not unique.`);
   }
 
   let rawQuery = auxUpdateUser(id, body);
@@ -153,15 +192,39 @@ const deleteUser = (req, res) => {
 
 //PATCH is a method of modifying resources where the client sends partial data that
 //is to be updated without modifying the entire data.
-const updateUserPartially = (req, res) => {
+const updateUserPartially = async (req, res) => {
   const id = parseInt(req.params.id);
   const body = Object.entries(req.body);
 
   //validate: req.body has the required fields of User and *only* those
+  let invalidFields = [];
   for (let [property, value] of body) {
     if (!User[property]) {
-      return res.status(404).send(`Invalid field: ${property}`);
+      invalidFields.push(property);
     }
+  }
+  if (invalidFields.length > 0) {
+    return res.status(404).send(`Invalid field: ${invalidFields}`); //imprime vetor bem?
+  }
+
+  //validate: field that marked as unique is unique
+  let notUniqueFields = [];
+  for (let [property, value] of body) {
+    if (User[property].unique) {
+      try {
+        let isUniques = await isUnique(property, value);
+        if (!isUniques) {
+          notUniqueFields.push(property);
+        }
+      } catch (e) {
+        return res.status(400).json(e);
+      }
+    }
+  }
+  if (notUniqueFields.length > 0) {
+    return res
+      .status(400)
+      .send(`Invalid data. Fields: ${notUniqueFields} are not unique.`);
   }
 
   let rawQuery = auxUpdateUser(id, body);
