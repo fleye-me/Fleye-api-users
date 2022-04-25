@@ -34,8 +34,6 @@ const getUsers = (req, res) => {
   queryy = initQuery(queryy);
   let rawQuery = auxGet(queryy);
 
-  console.log(rawQuery);
-
   pool.query(rawQuery, (err, results) => {
     if (err) {
       let error = adjustError(err);
@@ -112,7 +110,6 @@ const createUser = async (req, res) => {
   }
 
   rawQuery = auxCreateUser(body);
-  console.log(rawQuery);
 
   pool.query(rawQuery, (err, results) => {
     if (err) {
@@ -179,7 +176,6 @@ const updateUser = async (req, res) => {
   }
 
   let rawQuery = auxUpdateUser(id, body);
-  console.log(rawQuery);
 
   pool.query(rawQuery, (err, results) => {
     if (err) {
@@ -258,7 +254,6 @@ const updateUserPartially = async (req, res) => {
   }
 
   let rawQuery = auxUpdateUser(id, body);
-  console.log(rawQuery);
 
   pool.query(rawQuery, (err, results) => {
     if (err) {

@@ -81,7 +81,6 @@ async function isUnique(propertyName, value) {
   } else {
     rawQuery = `SELECT * FROM users WHERE ${propertyName} = ${value};`;
   }
-  console.log('raw query from isUnique: ', rawQuery);
   const prom = await new Promise((resolve, reject) => {
     pool.query(rawQuery, (err, results) => {
       if (err) {
@@ -91,7 +90,6 @@ async function isUnique(propertyName, value) {
       resolve(results.rows.length === 0);
     });
   });
-  console.log(prom);
   return prom;
 }
 
