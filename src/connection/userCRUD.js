@@ -17,9 +17,9 @@ const pool = new Pool({
 const { initQuery, adjustError } = require('../common/query-helper');
 
 const {
-  auxGet,
-  auxCreateUser,
-  auxUpdateUser,
+  buildSQLGetRawQuery,
+  buildSQLCreateUserRawQuery,
+  buildSQLUpdateUserRawQuery,
   isUnique,
   countUsers,
   validateUser,
@@ -32,7 +32,7 @@ const getUsers = (req, res) => {
   queryy = req.query;
 
   queryy = initQuery(queryy);
-  let rawQuery = auxGet(queryy);
+  let rawQuery = buildSQLGetRawQuery(queryy);
 
   pool.query(rawQuery, (err, results) => {
     if (err) {
@@ -109,7 +109,7 @@ const createUser = async (req, res) => {
       .send(`Invalid data. Fields: ${notUniqueFields} are not unique.`);
   }
 
-  rawQuery = auxCreateUser(body);
+  rawQuery = buildSQLCreateUserRawQuery(body);
 
   pool.query(rawQuery, (err, results) => {
     if (err) {
@@ -175,7 +175,7 @@ const updateUser = async (req, res) => {
       .send(`Invalid data. Fields: ${notUniqueFields} are not unique.`);
   }
 
-  let rawQuery = auxUpdateUser(id, body);
+  let rawQuery = buildSQLUpdateUserRawQuery(id, body);
 
   pool.query(rawQuery, (err, results) => {
     if (err) {
@@ -253,7 +253,7 @@ const updateUserPartially = async (req, res) => {
       .send(`Invalid data. Fields: ${notUniqueFields} are not unique.`);
   }
 
-  let rawQuery = auxUpdateUser(id, body);
+  let rawQuery = buildSQLUpdateUserRawQuery(id, body);
 
   pool.query(rawQuery, (err, results) => {
     if (err) {

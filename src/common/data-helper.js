@@ -11,7 +11,7 @@ const pool = new Pool({
 });
 
 // auxiliary functions - SQL commands
-function auxGet(query) {
+function buildSQLGetRawQuery(query) {
   const { skip, limit, page, filter, sort } = query; //decompose query object, if the object doesn't have one of the variables ERROR
   let rawQuery = 'SELECT * FROM users';
 
@@ -39,7 +39,7 @@ function auxGet(query) {
   return rawQuery;
 }
 
-function auxCreateUser(body) {
+function buildSQLCreateUserRawQuery(body) {
   let rawQuery = 'INSERT INTO users';
   let fields = [];
 
@@ -58,7 +58,7 @@ function auxCreateUser(body) {
   return rawQuery;
 }
 
-function auxUpdateUser(id, body) {
+function buildSQLUpdateUserRawQuery(id, body) {
   let rawQuery = 'UPDATE users SET ';
   let values = [];
   for (let [property, value] of body) {
@@ -123,9 +123,9 @@ async function validateUser(id) {
 }
 
 module.exports = {
-  auxGet,
-  auxCreateUser,
-  auxUpdateUser,
+  buildSQLGetRawQuery,
+  buildSQLCreateUserRawQuery,
+  buildSQLUpdateUserRawQuery,
   countUsers,
   isUnique,
   validateUser,
