@@ -6,20 +6,24 @@ const express = require('express');
 const routes = express.Router();
 //const User = require('../schemas/user.schema');
 
-const db = require('../connection/queries');
+const userCRUD = require('../connection/userCRUD');
 
 //relation endpoint -> function
 
-routes.get('/users', db.getUsers);
+routes.get('/users', userCRUD.getUsers);
 
-routes.get('/users/:id', db.getUserById);
+routes.get('/users/count/', userCRUD.countAllUsers); //order matters, needs to be before /users/:id (data)
 
-routes.post('/users', db.createUser);
+routes.get('/users/:id', userCRUD.getUserById);
 
-routes.put('/users/:id', db.updateUser);
+routes.post('/users', userCRUD.createUser);
 
-routes.delete('/users/:id', db.deleteUser);
+routes.put('/users/:id', userCRUD.updateUser);
 
-routes.patch('/users/:id', db.updateUserPartially);
+routes.delete('/users/:id', userCRUD.deleteUser);
+
+routes.patch('/users/:id', userCRUD.updateUserPartially);
 
 module.exports = routes;
+
+//can improve: https://stackoverflow.com/questions/25260818/rest-with-express-js-nested-router/25305272#25305272
