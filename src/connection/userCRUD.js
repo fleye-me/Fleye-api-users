@@ -4,6 +4,7 @@
 
 const User = require('../schemas/user.schema');
 require('dotenv').config();
+const USER_ERRORS = require('../errors/error');
 
 const Pool = require('pg').Pool;
 const pool = new Pool({
@@ -50,11 +51,10 @@ const getUsers = (req, res) => {
 
 const getUserById = async (req, res) => {
   const id = parseInt(req.params.id);
-
   //validate: user existis
   try {
     if (!(await validateUser(id))) {
-      return res.status(404).send('User not found.');
+      return res.status(404).send(USER_ERRORS.NOT_FOUND);
     }
   } catch (e) {
     return res.status(400).json(e);
@@ -79,7 +79,7 @@ const createUser = async (req, res) => {
         //desconsiders id bc it is automatically generated
         return res
           .status(404)
-          .send(`Mandatory field (${property}) was not informed.`);
+          .send(USER_ERRORS.MISSING_MANDATORY_FIELDS + property);
       }
     }
   }
@@ -91,7 +91,7 @@ const createUser = async (req, res) => {
     }
   }
   if (invalidFields.length > 0) {
-    return res.status(404).send(`Invalid field: ${invalidFields}`);
+    return res.status(404).send(USER_ERRORS.INVALID_FIELDS + invalidFields);
   }
 
   //validate: field that marked as unique is unique
@@ -111,7 +111,7 @@ const createUser = async (req, res) => {
   if (notUniqueFields.length > 0) {
     return res
       .status(400)
-      .send(`Invalid data. Fields: ${notUniqueFields} are not unique.`);
+      .send(USER_ERRORS.DATA_IS_NOT_UNIQUE + notUniqueFields);
   }
 
   rawQuery = buildSQLCreateUserRawQuery(body);
@@ -134,7 +134,7 @@ const updateUser = async (req, res) => {
   //validate: user existis
   try {
     if (!(await validateUser(id))) {
-      return res.status(404).send('User not found.');
+      return res.status(404).send(USER_ERRORS.NOT_FOUND);
     }
   } catch (e) {
     return res.status(400).json(e);
@@ -146,7 +146,7 @@ const updateUser = async (req, res) => {
       //desconsiders id bc u get it from req.params
       return res
         .status(404)
-        .send(`Mandatory field (${property}) was not informed.`);
+        .send(USER_ERRORS.MISSING_MANDATORY_FIELDS + property);
     }
   }
   //validate: req.body has the required fields of User and *only* those
@@ -157,7 +157,7 @@ const updateUser = async (req, res) => {
     }
   }
   if (invalidFields.length > 0) {
-    return res.status(404).send(`Invalid field: ${invalidFields}`);
+    return res.status(404).send(USER_ERRORS.INVALID_FIELDS + invalidFields);
   }
 
   //validate: field that marked as unique is unique
@@ -177,7 +177,7 @@ const updateUser = async (req, res) => {
   if (notUniqueFields.length > 0) {
     return res
       .status(400)
-      .send(`Invalid data. Fields: ${notUniqueFields} are not unique.`);
+      .send(USER_ERRORS.DATA_IS_NOT_UNIQUE + notUniqueFields);
   }
 
   let rawQuery = buildSQLUpdateUserRawQuery(id, body);
@@ -197,7 +197,7 @@ const deleteUser = async (req, res) => {
   //validate: user existis
   try {
     if (!(await validateUser(id))) {
-      return res.status(404).send('User not found.');
+      return res.status(404).send(USER_ERRORS.NOT_FOUND);
     }
   } catch (e) {
     return res.status(400).json(e);
@@ -221,7 +221,7 @@ const updateUserPartially = async (req, res) => {
   //validate: user existis
   try {
     if (!(await validateUser(id))) {
-      return res.status(404).send('User not found.');
+      return res.status(404).send(USER_ERRORS.NOT_FOUND);
     }
   } catch (e) {
     return res.status(400).json(e);
@@ -235,7 +235,7 @@ const updateUserPartially = async (req, res) => {
     }
   }
   if (invalidFields.length > 0) {
-    return res.status(404).send(`Invalid field: ${invalidFields}`); //imprime vetor bem?
+    return res.status(404).send(USER_ERRORS.INVALID_FIELDS + invalidFields); //imprime vetor bem?
   }
 
   //validate: field that marked as unique is unique
@@ -255,7 +255,7 @@ const updateUserPartially = async (req, res) => {
   if (notUniqueFields.length > 0) {
     return res
       .status(400)
-      .send(`Invalid data. Fields: ${notUniqueFields} are not unique.`);
+      .send(USER_ERRORS.DATA_IS_NOT_UNIQUE + notUniqueFields);
   }
 
   let rawQuery = buildSQLUpdateUserRawQuery(id, body);

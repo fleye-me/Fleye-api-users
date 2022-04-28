@@ -5,8 +5,6 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const routes = require('./src/routes/index');
 
-const client = require('./data/index');
-
 const app = express();
 
 app.use(morgan('dev')); //para ter td log de execucao
