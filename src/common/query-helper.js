@@ -17,18 +17,25 @@ function initQuery(
   let limit, page, sort, skip, filter;
 
   limit = parseInt(query['limit']);
-  if (Number.isNaN(limit)) limit = defaultValues.limit || 20; //either a default value for limit is informed (parameter) or it's 20
+  if (Number.isNaN(limit)) {
+    limit = defaultValues.limit || 20; //either a default value for limit is informed (parameter) or it's 20
+  }
 
   page = parseInt(query['page']);
-  if (Number.isNaN(page)) page = defaultValues.page || 0;
+  if (Number.isNaN(page)) {
+    page = defaultValues.page || 0;
+  }
 
   sort = query['sort'];
   sort_accepted = ['ASC', 'DESC'];
-  if (sort == null || !sort_accepted.includes(sort))
+  if (sort == null || !sort_accepted.includes(sort)) {
     sort = defaultValues.sort || 'DESC'; //check if it's eithe asc or desc
+  }
 
   skip = parseInt(query['skip']);
-  if (Number.isNaN(skip)) skip = defaultValues.skip || 0;
+  if (Number.isNaN(skip)) {
+    skip = defaultValues.skip || 0;
+  }
 
   filter = query['filter'];
 
@@ -74,34 +81,6 @@ function executeFilters(query, data) {
   return output.slice(beginning, end);
 }
 
-function adjustQuery(query) {
-  const { skip, limit, page, filter, sort } = query; //decompose query object, if the object doesn't have one of the variables ERROR
-  let rawQuery = 'SELECT * FROM users';
-
-  if (filter != null) {
-    filterJson = JSON.parse(filter);
-    rawQuery += ' WHERE ';
-    filters = Object.entries(filterJson);
-    filters.forEach((element) => {
-      if (typeof element[1] === 'string')
-        rawQuery += element[0] + " = '" + element[1] + "'";
-      //when the column value is a strign needs ''
-      else rawQuery += element[0] + ' = ' + element[1];
-      if (filters.indexOf(element) < filters.length - 1) rawQuery += ' and ';
-    });
-  }
-  rawQuery += ' ORDER BY ' + 'id ' + sort; //more generic
-  rawQuery += ' LIMIT ' + limit;
-  //rawQuery += ' OFFSET ' + (page * limit + skip).toString(); // WHY? if u dont convert it adds a 0 at the end
-  rawQuery += ' OFFSET ' + (page * limit + skip);
-
-  console.log(page);
-  console.log(limit);
-
-  rawQuery += ';';
-  return rawQuery;
-}
-
 function adjustError(err) {
   //transforms it in a nice json object
   err_obj = JSON.parse(
@@ -118,6 +97,5 @@ module.exports = {
   initQuery,
   organizeData,
   executeFilters,
-  adjustQuery,
   adjustError,
 }; //end of file, exports functions
