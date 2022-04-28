@@ -14,6 +14,11 @@ const pool = new Pool({
   port: process.env.PORT,
 });
 
+pool.connect(function (err) {
+  if (err) throw err;
+  console.log('Connected!!');
+});
+
 const { initQuery, adjustError } = require('../common/query-helper');
 
 const {
