@@ -3,22 +3,29 @@
 */
 
 const User = require('../schemas/user.schema');
+require('dotenv').config();
+const USER_ERRORS = require('../errors/error');
 
 const Pool = require('pg').Pool;
 const pool = new Pool({
-  user: 'admin',
-  host: 'localhost',
-  database: 'apiusuarios',
-  password: 'admin',
-  port: 5432,
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASS,
+  port: process.env.PORT,
+});
+
+pool.connect(function (err) {
+  if (err) throw err;
+  console.log('Connected!!');
 });
 
 const { initQuery, adjustError } = require('../common/query-helper');
 
 const {
-  auxGet,
-  auxCreateUser,
-  auxUpdateUser,
+  buildSQLGetRawQuery,
+  buildSQLCreateUserRawQuery,
+  buildSQLUpdateUserRawQuery,
   isUnique,
   countUsers,
   validateUser,
@@ -31,9 +38,7 @@ const getUsers = (req, res) => {
   queryy = req.query;
 
   queryy = initQuery(queryy);
-  let rawQuery = auxGet(queryy);
-
-  console.log(rawQuery);
+  let rawQuery = buildSQLGetRawQuery(queryy);
 
   pool.query(rawQuery, (err, results) => {
     if (err) {
@@ -46,11 +51,10 @@ const getUsers = (req, res) => {
 
 const getUserById = async (req, res) => {
   const id = parseInt(req.params.id);
-
   //validate: user existis
   try {
     if (!(await validateUser(id))) {
-      return res.status(404).send('User not found.');
+      return res.status(404).send(USER_ERRORS.NOT_FOUND);
     }
   } catch (e) {
     return res.status(400).json(e);
@@ -75,7 +79,7 @@ const createUser = async (req, res) => {
         //desconsiders id bc it is automatically generated
         return res
           .status(404)
-          .send(`Mandatory field (${property}) was not informed.`);
+          .send(USER_ERRORS.MISSING_MANDATORY_FIELDS + property);
       }
     }
   }
@@ -87,7 +91,7 @@ const createUser = async (req, res) => {
     }
   }
   if (invalidFields.length > 0) {
-    return res.status(404).send(`Invalid field: ${invalidFields}`);
+    return res.status(404).send(USER_ERRORS.INVALID_FIELDS + invalidFields);
   }
 
   //validate: field that marked as unique is unique
@@ -107,11 +111,10 @@ const createUser = async (req, res) => {
   if (notUniqueFields.length > 0) {
     return res
       .status(400)
-      .send(`Invalid data. Fields: ${notUniqueFields} are not unique.`);
+      .send(USER_ERRORS.DATA_IS_NOT_UNIQUE + notUniqueFields);
   }
 
-  rawQuery = auxCreateUser(body);
-  console.log(rawQuery);
+  rawQuery = buildSQLCreateUserRawQuery(body);
 
   pool.query(rawQuery, (err, results) => {
     if (err) {
@@ -131,7 +134,7 @@ const updateUser = async (req, res) => {
   //validate: user existis
   try {
     if (!(await validateUser(id))) {
-      return res.status(404).send('User not found.');
+      return res.status(404).send(USER_ERRORS.NOT_FOUND);
     }
   } catch (e) {
     return res.status(400).json(e);
@@ -143,7 +146,7 @@ const updateUser = async (req, res) => {
       //desconsiders id bc u get it from req.params
       return res
         .status(404)
-        .send(`Mandatory field (${property}) was not informed.`);
+        .send(USER_ERRORS.MISSING_MANDATORY_FIELDS + property);
     }
   }
   //validate: req.body has the required fields of User and *only* those
@@ -154,7 +157,7 @@ const updateUser = async (req, res) => {
     }
   }
   if (invalidFields.length > 0) {
-    return res.status(404).send(`Invalid field: ${invalidFields}`);
+    return res.status(404).send(USER_ERRORS.INVALID_FIELDS + invalidFields);
   }
 
   //validate: field that marked as unique is unique
@@ -174,11 +177,10 @@ const updateUser = async (req, res) => {
   if (notUniqueFields.length > 0) {
     return res
       .status(400)
-      .send(`Invalid data. Fields: ${notUniqueFields} are not unique.`);
+      .send(USER_ERRORS.DATA_IS_NOT_UNIQUE + notUniqueFields);
   }
 
-  let rawQuery = auxUpdateUser(id, body);
-  console.log(rawQuery);
+  let rawQuery = buildSQLUpdateUserRawQuery(id, body);
 
   pool.query(rawQuery, (err, results) => {
     if (err) {
@@ -195,7 +197,7 @@ const deleteUser = async (req, res) => {
   //validate: user existis
   try {
     if (!(await validateUser(id))) {
-      return res.status(404).send('User not found.');
+      return res.status(404).send(USER_ERRORS.NOT_FOUND);
     }
   } catch (e) {
     return res.status(400).json(e);
@@ -219,7 +221,7 @@ const updateUserPartially = async (req, res) => {
   //validate: user existis
   try {
     if (!(await validateUser(id))) {
-      return res.status(404).send('User not found.');
+      return res.status(404).send(USER_ERRORS.NOT_FOUND);
     }
   } catch (e) {
     return res.status(400).json(e);
@@ -233,7 +235,7 @@ const updateUserPartially = async (req, res) => {
     }
   }
   if (invalidFields.length > 0) {
-    return res.status(404).send(`Invalid field: ${invalidFields}`); //imprime vetor bem?
+    return res.status(404).send(USER_ERRORS.INVALID_FIELDS + invalidFields); //imprime vetor bem?
   }
 
   //validate: field that marked as unique is unique
@@ -253,11 +255,10 @@ const updateUserPartially = async (req, res) => {
   if (notUniqueFields.length > 0) {
     return res
       .status(400)
-      .send(`Invalid data. Fields: ${notUniqueFields} are not unique.`);
+      .send(USER_ERRORS.DATA_IS_NOT_UNIQUE + notUniqueFields);
   }
 
-  let rawQuery = auxUpdateUser(id, body);
-  console.log(rawQuery);
+  let rawQuery = buildSQLUpdateUserRawQuery(id, body);
 
   pool.query(rawQuery, (err, results) => {
     if (err) {
