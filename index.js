@@ -12,11 +12,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json()); //determina o tipo de dados que quer receber (json)
 app.use(cors()); //vazio pq vai ser localhost
 app.use(routes.users);
-//app.use(routes.companies);
 
 //abrindo servidor
 app.listen(3000, () => {
   console.log(`Express started at http://localhost:3000`);
-
-  //    client.connect();
 });

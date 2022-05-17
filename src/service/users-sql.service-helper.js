@@ -1,14 +1,8 @@
 const { query } = require('express');
-const { adjustError } = require('./query-helper');
+const { adjustError } = require('./users-query.service-helper');
+AbortController;
 
-const Pool = require('pg').Pool;
-const pool = new Pool({
-  user: 'admin',
-  host: 'localhost',
-  database: 'apiusuarios',
-  password: 'admin',
-  port: 5432,
-});
+const pool = require('../connection/dbConnection');
 
 // auxiliary functions - SQL commands
 function buildSQLGetRawQuery(query) {
