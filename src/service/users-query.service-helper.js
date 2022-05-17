@@ -1,9 +1,3 @@
-/*
-    This function recieves a request object and initializes common variables
-    Common variables: limit, page, sort, skip, filter
-    How to access this variables from other files: common.<varible>
-*/
-
 function initQuery(
   query,
   defaultValues = {

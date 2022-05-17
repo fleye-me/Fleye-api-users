@@ -1,4 +1,4 @@
-const UsersRoutes = require('./users.js');
+const UsersRoutes = require('./users.controller');
 
 module.exports = {
   users: UsersRoutes,

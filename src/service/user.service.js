@@ -1,26 +1,10 @@
-/*
-    Setting up configuration of PostgreSql connection
-*/
-
-const User = require('../schemas/user.schema');
+const User = require('../schema/user.schema');
 require('dotenv').config();
 const USER_ERRORS = require('../errors/error');
 
-const Pool = require('pg').Pool;
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASS,
-  port: process.env.PORT,
-});
+const pool = require('../connection/dbConnection');
 
-pool.connect(function (err) {
-  if (err) throw err;
-  console.log('Connected!!');
-});
-
-const { initQuery, adjustError } = require('../common/query-helper');
+const { initQuery, adjustError } = require('./users-query.service-helper');
 
 const {
   buildSQLGetRawQuery,
@@ -29,10 +13,8 @@ const {
   isUnique,
   countUsers,
   validateUser,
-} = require('../common/data-helper');
+} = require('./users-sql.service-helper');
 const createApplication = require('express/lib/express');
-
-// creating endpoints
 
 const getUsers = (req, res) => {
   queryy = req.query;
